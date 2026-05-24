@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Casino Game</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+body {
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  color: #fff;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  min-height: 100vh;
+  padding: 15px;
+}
+.container {
+  max-width: 650px;
+  margin: 0 auto;
+  background: rgba(0,0,0,0.4);
+  padding: 20px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 32px;
+  font-weight: 900;
+}
+.top-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.left-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 130px;
+  flex-shrink: 0;
+}
+.left-controls button {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn-deposit { background: linear-gradient(135deg, #4caf50, #66bb6a); color: white; }
+.btn-withdraw { background: linear-gradient(135deg, #2196f3, #42a5f5); color: white; }
+.right-controls { flex: 1; min-width: 0; }
+.balance-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0,0,0,0.5);
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.balance-box label { font-size: 13px; color: #aaa; }
+.balance-box div { font-size: 16px; font-weight: bold; }
+.balance-main { color: #4caf50; }
+.balance-profit { color: #ff9800; }
+.bet-history-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.btn-history {
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #9c27b0, #ba68c8);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 13px;
+}
+.bet-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.bet-controls input {
+  width: 120px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #1e222d;
+  color: #fff;
+  font-size: 16px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Home Game Cards */
+.game-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+  margin-top: 20px;
+}
+.game-card {
+  background: linear-gradient(135deg, rgba(255,0,255,0.2), rgba(0,255,255,0.2));
+  border: 2px solid rgba(0,255,255,0.3);
+  border-radius: 20px;
+  padding: 25px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.game-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 25px rgba(0,255,255,0.5);
+}
+.game-card .icon {
+  font-size: 60px;
+  margin-bottom: 10px;
+}
+.game-card .name {
+  font-size: 24px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Game View */
+.game-view { display: none; }
+.game-view.active { display: block; }
+.game-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.back-btn {
+  padding: 10px 15px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+}
+.game-title {
+  font-size: 22px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Game Content */
+.wheel-wrapper {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 25px auto;
+  max-width: 100%;
+}
+.wheel {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 8px solid #333;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(255,0,255,0.6);
+}
+.wheel-segment {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  transform-origin: 100% 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 22px;
+}
+.wheel-segment.win { background: #00c853; color: #fff; }
+.wheel-segment.lose { background: #d50000; color: #fff; }
+.pointer {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-top: 25px solid #ffff00;
+  z-index: 10;
+}
+.wheel-result-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  font-weight: 900;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.wheel-result-overlay.show { opacity: 1; }
+.wheel-result-overlay.win { color: #00ff88; }
+.wheel-result-overlay.lose { color: #ff4444; }
+.match-wrapper {
+  position: relative;
+  max-width: 280px;
+  margin: 25px auto;
+}
+.match-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+.match-card {
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 50px;
+  cursor: pointer;
+  transition: 0.4s;
+}
+.match-card.flipped {
+  background: #fff;
+  transform: rotateY(180deg);
+}
+.match-result-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  font-weight: 900;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.match-result-overlay.show { opacity: 1; }
+.match-result-overlay.win { color: #00ff88; }
+.match-result-overlay.lose { color: #ff4444; }
+.ludo-wrapper { text-align: center; margin: 25px auto; }
+.dice-select {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 280px;
+  margin: 0 auto 20px;
+}
+.dice-btn {
+  padding: 20px;
+  font-size: 28px;
+  font-weight: 900;
+  border: 2px solid #555;
+  border-radius: 12px;
+  background: #1e222d;
+  color: #fff;
+  cursor: pointer;
+}
+.dice-btn.active {
+  border-color: #00ffff;
+  background: linear-gradient(135deg, #00ffff, #00ff88);
+  color: #000;
+}
+.dice-box {
+  width: 120px;
+  height: 120px;
+  margin: 20px auto;
+  background: #fff;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  font-weight: 900;
+  color: #000;
+}
+.dice-box.rolling { animation: rollDice 0.2s infinite; }
+@keyframes rollDice {
+ 0% { transform: rotate(0deg); }
+ 100% { transform: rotate(360deg); }
+}
+.ludo-result-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  font-weight: 900;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.ludo-result-overlay.show { opacity: 1; }
+.ludo-result-overlay.win { color: #00ff88; }
+.ludo-result-overlay.lose { color: #ff4444; }
+.game-btn {
+  width: 100%;
+  padding: 16px;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #000;
+  margin-top: 15px;
+}
+.game-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.result {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 20px 0;
+  min-height: 45px;
+  text-align: center;
+}
+.result.win { color: #00e676; }
+.result.lose { color: #ff1744; }
+.popup {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+}
+.popup.active { display: flex; }
+.popup-box {
+  background: #1e222d;
+  padding: 25px;
+  border-radius: 15px;
+  width: 100%;
+  max-width: 350px;
+}
+.popup-box h3 {
+  margin-bottom: 15px;
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 22px;
+}
+.popup-box input {
+  width: 100%;
+  padding: 12px;
+  margin: 5px 0 10px 0;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #2a2e39;
+  color: #fff;
+  font-size: 16px;
+}
+.deposit-note {
+  background: #2a2e39;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 10px 0 15px 0;
+  font-size: 14px;
+  color: #ff9800;
+  text-align: center;
+  line-height: 1.6;
+}
+.popup-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+.popup-buttons button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.btn-confirm { background: linear-gradient(135deg, #4caf50, #66bb6a); color: white; }
+.btn-cancel { background: linear-gradient(135deg, #f44336, #e57373); color: white; }
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  display: block;
+}
+.history-table th,.history-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #444;
+  font-size: 13px;
+}
+.history-table th { background: #2a2e39; position: sticky; top: 0; }
+.history-type.deposit { color: #4caf50; }
+.history-type.withdraw { color: #2196f3; }
+.history-type.bet-win { color: #00e676; }
+.history-type.bet-lose { color: #ff1744; }
+.alert-popup { text-align: center; }
+.alert-popup h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #ff4444;
+}
+.alert-popup p {
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+.alert-popup button {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #ff4444, #ff6666);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+@media (max-width: 400px) {
+ .container { padding: 15px; }
+ .left-controls { width: 100%; flex-direction: row; }
+ .left-controls button { flex: 1; }
+ .bet-controls input { width: 100px; font-size: 14px; }
+ .dice-btn { padding: 15px; font-size: 24px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">🎰 CASINO GAME 🎰</div>
+
+  <!-- Top Section Always Visible -->
+  <div class="top-section">
+    <div class="left-controls">
+      <button class="btn-deposit" onclick="openPopup('deposit')">Deposit</button>
+      <button class="btn-withdraw" onclick="openPopup('withdraw')">Withdraw</button>
+    </div>
+
+    <div class="right-controls">
+      <div class="balance-box">
+        <label>Main Balance</label>
+        <div class="balance-main">$<span id="balance">0.00</span></div>
+      </div>
+      <div class="balance-box">
+        <label>Profit Balance</label>
+        <div class="balance-profit">$<span id="profitBalance">0.00</span></div>
+      </div>
+      <div class="bet-history-row">
+        <button class="btn-history" onclick="openPopup('history')">History</button>
+        <div class="bet-controls">
+          <label>Bet:</label>
+          <input type="number" id="betAmount" value="20" min="20" max="10000">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Home Page with Game Cards -->
+  <div id="homePage">
+    <div class="game-grid">
+      <div class="game-card" onclick="openGame('spin')">
+        <div class="icon">🎡</div>
+        <div class="name">Spin</div>
+      </div>
+      <div class="game-card" onclick="openGame('match')">
+        <div class="icon">🎴</div>
+        <div class="name">Match</div>
+      </div>
+      <div class="game-card" onclick="openGame('ludo')">
+        <div class="icon">🎲</div>
+        <div class="name">Ludo</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spin Game View -->
+  <div id="spin" class="game-view">
+    <div class="game-header">
+      <button class="back-btn" onclick="goHome()">← Back</button>
+      <div class="game-title">🎡 Spin Game</div>
+    </div>
+    <div class="wheel-wrapper">
+      <div class="pointer"></div>
+      <div class="wheel-result-overlay" id="wheelResult">WIN</div>
+      <div class="wheel" id="wheel">
+        <div class="wheel-segment win" style="transform: rotate(0deg);">WIN</div>
+        <div class="wheel-segment lose" style="transform: rotate(72deg);">LOSE</div>
+        <div class="wheel-segment win" style="transform: rotate(144deg);">WIN</div>
+        <div class="wheel-segment lose" style="transform: rotate(216deg);">LOSE</div>
+        <div class="wheel-segment lose" style="transform: rotate(288deg);">LOSE</div>
+      </div>
+    </div>
+    <button class="game-btn" id="spinBtn" onclick="spinWheel()">SPIN NOW</button>
+    <div class="result" id="spinResult"></div>
+  </div>
+
+  <!-- Match Game View -->
+  <div id="match" class="game-view">
+    <div class="game-header">
+      <button class="back-btn" onclick="goHome()">← Back</button>
+      <div class="game-title">🎴 Match Game</div>
+    </div>
+    <div class="match-wrapper">
+      <div class="match-result-overlay" id="matchResultOverlay">WIN</div>
+      <div class="match-grid" id="matchGrid"></div>
+    </div>
+    <button class="game-btn" id="matchBtn" onclick="startMatch()">PLAY MATCH</button>
+    <div class="result" id="matchResult"></div>
+  </div>
+
+  <!-- Ludo Game View -->
+  <div id="ludo" class="game-view">
+    <div class="game-header">
+      <button class="back-btn" onclick="goHome()">← Back</button>
+      <div class="game-title">🎲 Ludo Game</div>
+    </div>
+    <div class="ludo-wrapper">
+      <h3 style="margin-bottom: 15px; color: #00ffff;">Number Select Koro</h3>
+      <div class="dice-select">
+        <button class="dice-btn" onclick="selectDice(1, this)">1</button>
+        <button class="dice-btn" onclick="selectDice(2, this)">2</button>
+        <button class="dice-btn" onclick="selectDice(3, this)">3</button>
+        <button class="dice-btn" onclick="selectDice(4, this)">4</button>
+        <button class="dice-btn" onclick="selectDice(5, this)">5</button>
+        <button class="dice-btn" onclick="selectDice(6, this)">6</button>
+      </div>
+      <div style="position: relative;">
+        <div class="ludo-result-overlay" id="ludoResultOverlay">WIN</div>
+        <div class="dice-box" id="diceBox">?</div>
+      </div>
+    </div>
+    <button class="game-btn" id="ludoBtn" onclick="rollDice()">ROLL DICE</button>
+    <div class="result" id="ludoResult"></div>
+  </div>
+</div>
+
+<!-- Popups -->
+<div class="popup" id="depositPopup">
+  <div class="popup-box">
+    <h3>Deposit</h3>
+    <input type="number" id="depAmount" placeholder="Minimum 900">
+    <input type="number" id="depLast4" placeholder="Last 4 digit">
+    <div class="deposit-note">
+      01819811370 নগদ সেন্ড মানি করে<br>
+      উপরে বক্সে 4 digit দিয়ে confirm করো
+    </div>
+    <div class="popup-buttons">
+      <button class="btn-cancel" onclick="closePopup('deposit')">Cancel</button>
+      <button class="btn-confirm" onclick="confirmDeposit()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="popup" id="withdrawPopup">
+  <div class="popup-box">
+    <h3>Withdraw</h3>
+    <label>Available Profit: $<span id="availableProfit">0.00</span></label>
+    <input type="number" id="withAmount" placeholder="Amount">
+    <input type="number" id="withNumber" placeholder="Nagad Number">
+    <div class="popup-buttons">
+      <button class="btn-cancel" onclick="closePopup('withdraw')">Cancel</button>
+      <button class="btn-confirm" onclick="confirmWithdraw()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="popup" id="historyPopup">
+  <div class="popup-box" style="max-width: 450px;">
+    <h3>Transaction History</h3>
+    <table class="history-table">
+      <thead>
+        <tr><th>Type</th><th>Amount</th><th>Time</th></tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+    <div class="popup-buttons">
+      <button class="btn-cancel" onclick="closePopup('history')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="popup alert-popup" id="alertPopup">
+  <div class="popup-box">
+    <h3>⚠️ Alert</h3>
+    <p id="alertMessage">Message here</p>
+    <button onclick="closePopup('alert')">OK</button>
+  </div>
+</div>
+
+<script>
+let balance = 0;
+let profitBalance = 0;
+let history = [];
+const PROFIT_RATE = 0.60;
+const MIN_BET = 20;
+const MAX_BET = 10000;
+let gameActive = false;
+let selectedDice = null;
+
+window.onload = function() {
+  loadData();
+  updateBalance();
+  renderHistory();
+}
+
+function openGame(game) {
+  document.getElementById('homePage').style.display = 'none';
+  document.getElementById(game).classList.add('active');
+}
+
+function goHome() {
+  document.querySelectorAll('.game-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('homePage').style.display = 'block';
+  gameActive = false;
+  // Reset game buttons
+  document.getElementById('spinBtn').disabled = false;
+  document.getElementById('matchBtn').disabled = false;
+  document.getElementById('ludoBtn').disabled = false;
+}
+
+function showAlert(message) {
+  document.getElementById('alertMessage').innerText = message;
+  openPopup('alert');
+}
+
+function saveData() {
+  localStorage.setItem('casino_balance', balance);
+  localStorage.setItem('casino_profit', profitBalance);
+  localStorage.setItem('casino_history', JSON.stringify(history));
+}
+
+function loadData() {
+  balance = parseFloat(localStorage.getItem('casino_balance')) || 0;
+  profitBalance = parseFloat(localStorage.getItem('casino_profit')) || 0;
+  history = JSON.parse(localStorage.getItem('casino_history')) || [];
+}
+
+function addHistory(type, amount) {
+  let now = new Date();
+  let time = now.toLocaleTimeString('bn-BD', {hour: '2-digit', minute: '2-digit'});
+  let date = now.toLocaleDateString('bn-BD');
+  history.unshift({type, amount, time: `${date} ${time}`});
+  if(history.length > 50) history.pop();
+  saveData();
+  renderHistory();
+}
+
+function renderHistory() {
+  let tbody = document.getElementById('historyBody');
+  tbody.innerHTML = '';
+  history.forEach(item => {
+    let row = `<tr>
+      <td class="history-type ${item.type}">${item.type}</td>
+      <td>$${item.amount.toFixed(2)}</td>
+      <td>${item.time}</td>
+    </tr>`;
+    tbody.innerHTML += row;
+  });
+}
+
+function updateBalance() {
+  document.getElementById('balance').innerText = balance.toFixed(2);
+  document.getElementById('profitBalance').innerText = profitBalance.toFixed(2);
+  document.getElementById('availableProfit').innerText = profitBalance.toFixed(2);
+}
+
+function openPopup(type) {
+  document.getElementById(type + 'Popup').classList.add('active');
+}
+
+function closePopup(type) {
+  document.getElementById(type + 'Popup').classList.remove('active');
+}
+
+function confirmDeposit() {
+  let amount = parseFloat(document.getElementById('depAmount').value);
+  let last4 = document.getElementById('depLast4').value;
+
+  if(!amount || amount < 900) { showAlert('Minimum 900 taka deposit korte hobe!'); return; }
+  if(!last4 || last4.length!== 4) { showAlert('4 digit number dao!'); return; }
+
+  balance += amount;
+  addHistory('deposit', amount);
+  updateBalance();
+  closePopup('deposit');
+  showAlert(`Deposit Successful! ${amount} taka add holo`);
+}
+
+function confirmWithdraw() {
+  let amount = parseFloat(document.getElementById('withAmount').value);
+  let nagadNumber = document.getElementById('withNumber').value;
+
+  if(!amount || amount < MIN_BET) { showAlert(`Minimum $${MIN_BET} withdraw korte hobe!`); return; }
+  if(amount > profitBalance) { showAlert('দুঃখিত আপনার একাউন্ট ব্যালেন্স নাই দয়া করে পরে চেষ্টা করুন 🚫'); return; }
+  if(!nagadNumber || nagadNumber.length < 10) { showAlert('Valid Nagad Number dao!'); return; }
+
+  profitBalance -= amount;
+  balance -= amount;
+  if(balance < 0) balance = 0;
+  if(profitBalance < 0) profitBalance = 0;
+
+  addHistory('withdraw', amount);
+  updateBalance();
+  closePopup('withdraw');
+
+  let message = `Withdraw Request:%0AAmount: $${amount}%0ANagad Number: ${nagadNumber}`;
+  window.open(`https://wa.me/601123192967?text=${message}`, '_blank');
+  showAlert('Withdraw Request Sent!');
+}
+
+function getValidBet() {
+  let bet = parseFloat(document.getElementById('betAmount').value);
+  if(!bet || bet < MIN_BET) {
+    showAlert(`Minimum bet $${MIN_BET}!`);
+    return MIN_BET;
+  }
+  if(bet > MAX_BET) {
+    showAlert(`Maximum bet $${MAX_BET}!`);
+    return MAX_BET;
+  }
+  return bet;
+}
+
+function selectDice(num, btn) {
+  selectedDice = num;
+  document.querySelectorAll('.dice-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function rollDice() {
+  if(gameActive) return;
+  if(!selectedDice) { showAlert('Age ekta number select koro!'); return; }
+
+  let bet = getValidBet();
+  if(bet > balance) { showAlert('Insufficient balance!'); return; }
+
+  gameActive = true;
+  balance -= bet;
+  updateBalance();
+
+  document.getElementById('ludoBtn').disabled = true;
+  document.getElementById('ludoResult').innerText = '';
+  document.getElementById('ludoResultOverlay').classList.remove('show');
+
+  let diceBox = document.getElementById('diceBox');
+  diceBox.classList.add('rolling');
+  diceBox.innerText = '?';
+
+  let resultNum = Math.random() < 0.20 ? selectedDice : {1:6,6:1,2:5,5:2,3:4,4:3}[selectedDice];
+
+  setTimeout(() => {
+    diceBox.classList.remove('rolling');
+    diceBox.innerText = resultNum;
+
+    let isWin = resultNum === selectedDice;
+    let overlayEl = document.getElementById('ludoResultOverlay');
+
+    if(isWin) {
+      let profit = bet * PROFIT_RATE;
+      balance += bet;
+      profitBalance += profit;
+      addHistory('bet-win', profit);
+      overlayEl.innerText = 'WIN';
+      overlayEl.className = 'ludo-result-overlay win show';
+      document.getElementById('ludoResult').innerText = `🎉 WIN! +$${(bet + profit).toFixed(2)}`;
+    } else {
+      let penalty = bet * 0.5;
+      profitBalance -= penalty;
+      if(profitBalance < 0) profitBalance = 0;
+      addHistory('bet-lose', penalty);
+      overlayEl.innerText = 'LOSE';
+      overlayEl.className = 'ludo-result-overlay lose show';
+      document.getElementById('ludoResult').innerText = `💔 LOSE! -$${penalty.toFixed(2)}`;
+    }
+
+    updateBalance();
+    setTimeout(() => {
+      overlayEl.classList.remove('show');
+      gameActive = false;
+      document.getElementById('ludoBtn').disabled = false;
+      selectedDice = null;
+      document.querySelectorAll('.dice-btn').forEach(btn => btn.classList.remove('active'));
+      diceBox.innerText = '?';
+    }, 2000);
+  }, 2500);
+}
+
+function spinWheel() {
+  if(gameActive) return;
+  let bet = getValidBet();
+  if(bet > balance) { showAlert('Insufficient balance!'); return; }
+
+  gameActive = true;
+  balance -= bet;
+  updateBalance();
+
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('spinResult').innerText = '';
+  document.getElementById('wheelResult').classList.remove('show');
+
+  let stopAngle = Math.random() < 0.20 ? Math.random() * 72 + 144*Math.floor(Math.random()*2) : 72 + Math.random() * 216;
+  let wheel = document.getElementById('wheel');
+  wheel.style.transition = 'none';
+  wheel.style.transform = 'rotate(0deg)';
+  wheel.offsetHeight;
+
+  let spinTime = 5;
+  let degrees = 360 * 8 + stopAngle;
+
+  wheel.style.transition = `transform ${spinTime}s cubic-bezier(0.17, 0.67, 0.12, 0.99)`;
+  wheel.style.transform = `rotate(${degrees}deg)`;
+
+  setTimeout(() => {
+    let finalAngle = degrees % 360;
+    let isWin = (finalAngle >= 0 && finalAngle < 72) || (finalAngle >= 144 && finalAngle < 216);
+
+    let resultEl = document.getElementById('wheelResult');
+    if(isWin) {
+      let profit = bet * PROFIT_RATE;
+      balance += bet;
+      profitBalance += profit;
+      addHistory('bet-win', profit);
+      resultEl.innerText = 'WIN';
+      resultEl.className = 'wheel-result-overlay win show';
+      document.getElementById('spinResult').innerText = `🎉 WIN! +$${(bet + profit).toFixed(2)}`;
+    } else {
+      let penalty = bet * 0.5;
+      profitBalance -= penalty;
+      if(profitBalance < 0) profitBalance = 0;
+      addHistory('bet-lose', penalty);
+      resultEl.innerText = 'LOSE';
+      resultEl.className = 'wheel-result-overlay lose show';
+      document.getElementById('spinResult').innerText = `💔 LOSE! -$${penalty.toFixed(2)}`;
+    }
+
+    updateBalance();
+    setTimeout(() => {
+      resultEl.classList.remove('show');
+      gameActive = false;
+      document.getElementById('spinBtn').disabled = false;
+    }, 2000);
+  }, spinTime * 1000);
+}
+
+function startMatch() {
+  if(gameActive) return;
+  let bet = getValidBet();
+  if(bet > balance) { showAlert('Insufficient balance!'); return; }
+
+  gameActive = true;
+  balance -= bet;
+  updateBalance();
+
+  document.getElementById('matchBtn').disabled = true;
+  document.getElementById('matchResult').innerText = '';
+  document.getElementById('matchResultOverlay').classList.remove('show');
+
+  let isWin = Math.random() < 0.20;
+  let cardValues = isWin ? ['🍎','🍎'] : ['🍎','🍌'];
+  let shuffled = [...cardValues].sort(() => Math.random() - 0.5);
+  let grid = document.getElementById('matchGrid');
+  grid.innerHTML = '';
+
+  shuffled.forEach((val) => {
+    let card = document.createElement('div');
+    card.className = 'match-card';
+    card.innerText = val;
+    card.style.color = '#fff';
+    grid.appendChild(card);
+  });
+
+  setTimeout(() => {
+    let cards = document.querySelectorAll('.match-card');
+    cards.forEach(c => c.classList.add('flipped'));
+    checkMatch(isWin, bet);
+  }, 1500);
+}
+
+function checkMatch(isWin, bet) {
+  let overlayEl = document.getElementById('matchResultOverlay');
+  setTimeout(() => {
+    if(isWin) {
+      let profit = bet * PROFIT_RATE;
+      balance += bet;
+      profitBalance += profit;
+      addHistory('bet-win', profit);
+      overlayEl.innerText = 'WIN';
+      overlayEl.className = 'match-result-overlay win show';
+      document.getElementById('matchResult').innerText = `🎉 WIN! +$${(bet + profit).toFixed(2)}`;
+    } else {
+      let penalty = bet * 0.5;
+      profitBalance -= penalty;
+      if(profitBalance < 0) profitBalance = 0;
+      addHistory('bet-lose', penalty);
+      overlayEl.innerText = 'LOSE';
+      overlayEl.className = 'match-result-overlay lose show';
+      document.getElementById('matchResult').innerText = `💔 LOSE! -$${penalty.toFixed(2)}`;
+    }
+    updateBalance();
+    setTimeout(() => {
+      overlayEl.classList.remove('show');
+      gameActive = false;
+      document.getElementById('matchBtn').disabled = false;
+    }, 2000);
+  }, 800);
+}
+</script>
+</body>
+</html>
